@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import SynthContainer from '../containers/SynthContainer'
+const unmuteAudio = require('unmute-ios-audio')
 
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body

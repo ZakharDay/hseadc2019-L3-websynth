@@ -14,6 +14,7 @@ export default class SynthContainer extends PureComponent {
       const oscillatorNode = audioContext.createOscillator()
 
       oscillator.key = i
+      oscillator.detune = 0
 
       oscillatorElements.push(
         <Oscillator

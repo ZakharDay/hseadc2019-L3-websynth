@@ -1,20 +1,24 @@
 import React, { PureComponent } from 'react'
+import Button from './Button'
+import Slider from './Slider'
 
 export default class Oscillator extends PureComponent {
   constructor(props) {
     super(props)
 
-    const { audioContext, oscillatorNode, frequency } = props
+    const { audioContext, oscillatorNode, frequency, detune } = props
 
     oscillatorNode.frequency.setValueAtTime(frequency, audioContext.currentTime)
     oscillatorNode.type = 'square'
 
     this.state = {
-      started: false
+      started: false,
+      frequency,
+      detune
     }
   }
 
-  start = () => {
+  handleStart = () => {
     const { audioContext, oscillatorNode } = this.props
     const { started } = this.state
 
@@ -29,19 +33,52 @@ export default class Oscillator extends PureComponent {
     }
   }
 
-  stop = () => {
+  handleStop = () => {
     const { audioContext, oscillatorNode } = this.props
 
     oscillatorNode.disconnect(audioContext.destination)
   }
 
+  handleFrequencyChange = (frequency) => {
+    const { audioContext, oscillatorNode } = this.props
+    oscillatorNode.frequency.setValueAtTime(frequency, audioContext.currentTime)
+
+    this.setState({
+      frequency
+    })
+  }
+
+  handleDetuneChange = (detune) => {
+    const { audioContext, oscillatorNode } = this.props
+    oscillatorNode.detune.setValueAtTime(detune, audioContext.currentTime)
+
+    this.setState({
+      detune
+    })
+  }
+
   render() {
-    const { frequency } = this.props
+    const { oscillatorNode } = this.props
+    const { frequency, detune } = this.state
 
     return (
       <div>
-        <div onClick={this.start}>START</div>
-        <div onClick={this.stop}>STOP</div>
+        <Button text="START" handleClick={this.handleStart} />
+        <Button text="STOP" handleClick={this.handleStop} />
+
+        <Slider
+          min="0"
+          max="1320"
+          value={frequency}
+          handleChange={this.handleFrequencyChange}
+        />
+
+        <Slider
+          min="-100"
+          max="100"
+          value={detune}
+          handleChange={this.handleDetuneChange}
+        />
       </div>
     )
   }
