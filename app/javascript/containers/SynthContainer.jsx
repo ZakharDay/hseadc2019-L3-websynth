@@ -3,6 +3,7 @@ import * as Tone from 'tone'
 
 import Button from '../control_components/Button'
 import ToneSynth from '../module_components/ToneSynth'
+import ChorusEffect from '../module_components/ChorusEffect'
 
 export default class SynthContainer extends PureComponent {
   constructor(props) {
@@ -24,25 +25,63 @@ export default class SynthContainer extends PureComponent {
     })
   }
 
+  generateUniqId = () => {
+    return Math.floor(Math.random() * Date.now())
+  }
+
   renderToneStartButton = () => {
     return <Button text="START" handleClick={this.startWebAudio} />
   }
 
   initInstruments = () => {
     const synthSettings = {
-      volume: 0,
+      volume: 0.8,
+      detune: 0,
+      portamento: 0.05,
+      envelope: {
+        attack: 0.05,
+        attackCurve: 'exponential',
+        decay: 0.2,
+        decayCurve: 'exponential',
+        sustain: 0.2,
+        release: 1.5,
+        releaseCurve: 'exponential'
+      },
       oscillator: {
-        type: 'square'
+        type: 'triangle',
+        modulationType: 'sine',
+        // partialCount: 0,
+        // partials: [],
+        phase: 0,
+        harmonicity: 0.5
       }
     }
 
-    const synthNode = new Tone.Synth(synthSettings).toDestination()
+    const chorusSettings = {
+      wet: 0.6,
+      type: 'sine',
+      frequency: 1.5,
+      delayTime: 3.5,
+      depth: 0.7,
+      spread: 180
+    }
+
+    const synthNode = new Tone.Synth(synthSettings)
+    const chorusNode = new Tone.Chorus(chorusSettings).start().toDestination()
+    synthNode.connect(chorusNode)
 
     const instruments = [
       {
+        id: this.generateUniqId(),
         type: 'ToneSynth',
         node: synthNode,
         settings: synthSettings
+      },
+      {
+        id: this.generateUniqId(),
+        type: 'Chorus',
+        node: chorusNode,
+        settings: chorusSettings
       }
     ]
 
@@ -69,8 +108,20 @@ export default class SynthContainer extends PureComponent {
     const instruments = []
 
     this.state.instruments.forEach((instrument, i) => {
-      const newInstrument = Object.assign({}, instrument)
-      newInstrument.settings[property] = value
+      const { type, node, settings } = instrument
+
+      const newInstrument = {
+        type: type,
+        node: node,
+        settings: Object.assign({}, settings)
+      }
+
+      if (property.length === 1) {
+        newInstrument.settings[property] = value
+      } else if (property.length === 2) {
+        newInstrument.settings[property[0]][property[1]] = value
+      }
+
       instruments.push(newInstrument)
     })
 
@@ -83,11 +134,20 @@ export default class SynthContainer extends PureComponent {
     const { instruments } = this.state
 
     return (
-      <ToneSynth
-        node={instruments[0].node}
-        settings={instruments[0].settings}
-        handlePropertyValueChange={this.handlePropertyValueChange}
-      />
+      <div>
+        <ToneSynth
+          id={instruments[0].id}
+          node={instruments[0].node}
+          settings={instruments[0].settings}
+          handlePropertyValueChange={this.handlePropertyValueChange}
+        />
+        <ChorusEffect
+          id={instruments[1].id}
+          node={instruments[1].node}
+          settings={instruments[1].settings}
+          handlePropertyValueChange={this.handlePropertyValueChange}
+        />
+      </div>
     )
   }
 
@@ -95,7 +155,7 @@ export default class SynthContainer extends PureComponent {
     const { webAudioStarted } = this.state
 
     return (
-      <div>
+      <div className="SynthContainer">
         {webAudioStarted === true
           ? this.renderSynthRoom()
           : this.renderToneStartButton()}
